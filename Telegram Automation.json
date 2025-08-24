@@ -1,0 +1,633 @@
+{
+  "name": "Telegram Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -784,
+        -208
+      ],
+      "id": "8556e4c1-65e6-418c-93aa-28d69cc4e971",
+      "name": "Telegram Trigger1",
+      "webhookId": "f18ca0ec-9d88-4389-83d5-f9c6e898295b",
+      "credentials": {
+        "telegramApi": {
+          "id": "bxjodbx9FyqELq8q",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Trigger\n\n",
+        "height": 480,
+        "width": 672
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -832,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "e852d058-3f57-4367-9d93-9b5428a465a8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -48
+      ],
+      "id": "5c635430-affb-4d35-af82-bf9d645f72f4",
+      "name": "Get a file",
+      "webhookId": "262a29a7-532d-4830-ac3e-351774be57c9",
+      "credentials": {
+        "telegramApi": {
+          "id": "bxjodbx9FyqELq8q",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "en"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        144,
+        -48
+      ],
+      "id": "aa140b0f-0786-4b5d-ab30-a139cce26e83",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "vOB4wyG3bzHlV5Be",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1408,
+        -352
+      ],
+      "id": "d5f43f94-4d88-4206-9bf4-318a66edc632",
+      "name": "Send a text message",
+      "webhookId": "fe4acc33-db4a-4ecd-bb91-fdfec2ee27f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "bxjodbx9FyqELq8q",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "text": "Not authorized",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "94ea94b8-23b7-443c-852c-3952c1ae2384",
+      "name": "Send a text message1",
+      "webhookId": "fe4acc33-db4a-4ecd-bb91-fdfec2ee27f1",
+      "credentials": {
+        "telegramApi": {
+          "id": "bxjodbx9FyqELq8q",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: ChatGPT answer is in items[0].json.text\nconst input = $input.first().json.output;\n\n// 1. Remove unsafe HTML tags\nlet safeText = input\n  .replace(/<br\\s*\\/?>/gi, '\\n')   // replace <br> with newline\n  .replace(/<\\/?[^>]+(>|$)/g, \"\")  // strip all other tags\n\n// 2. Ensure it's safe for Telegram (escape &, <, >)\nsafeText = safeText\n  .replace(/&/g, \"&amp;\")\n  .replace(/</g, \"&lt;\")\n  .replace(/>/g, \"&gt;\");\n\nreturn [{ json: { text: safeText } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        -240
+      ],
+      "id": "2d5e14b5-d1b6-4b1d-ba61-8a11e04da6ec",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "={{ $json.text }}",
+        "options": {
+          "response_format": "opus"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1408,
+        -160
+      ],
+      "id": "97ef843b-0d4d-4722-9f42-41bc648f2cb2",
+      "name": "Generate audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "vOB4wyG3bzHlV5Be",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {
+          "fileName": "={{ $json.fileName }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1616,
+        -160
+      ],
+      "id": "54b1b4d0-15f7-4baf-a8ec-7176581b50c7",
+      "name": "Send an audio file",
+      "webhookId": "621d811b-0384-405e-9087-d12603325c28",
+      "credentials": {
+        "telegramApi": {
+          "id": "bxjodbx9FyqELq8q",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "89da5758-caf5-4469-a3f6-729f051cbca4",
+              "leftValue": "={{ $json.message.chat.id }}",
+              "rightValue": 1359422473,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        -208
+      ],
+      "id": "62a2dc29-dc28-4fb9-9863-c205ecc66c1f",
+      "name": "Authenticate Chat ID"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger1').item.json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    },
+                    "id": "ec761ac3-b259-493b-878e-9c30699f5460"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6a9eb2db-3ea5-402a-94ad-ee82c69c5dfc",
+                    "leftValue": "={{ $('Telegram Trigger1').item.json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -352,
+        -224
+      ],
+      "id": "efebec49-5714-45de-96f2-b9e7fe0d3f2d",
+      "name": "Switch between Audio or Text"
+    },
+    {
+      "parameters": {
+        "content": "## Return back to Telegram user\n",
+        "height": 448,
+        "width": 688,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1136,
+        -432
+      ],
+      "typeVersion": 1,
+      "id": "cbd263d7-8c4d-4930-8b31-b2fbdf64d71a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text ?? $json.message.text}}",
+        "options": {
+          "systemMessage": "=If person is talking about meeting, plan a meeting if not just answer as an assistant. Current time is {{ $now.setZone(\"Europe/Istanbul\") }}. "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -240
+      ],
+      "id": "3b0a557c-7413-4d47-8b8f-5f39d8fad4a4",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger1').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        0
+      ],
+      "id": "555f9cdd-0247-4589-990a-66631730f53c",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "4d8261f4-1334-4165-b70e-688a677b181b",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "vOB4wyG3bzHlV5Be",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to create a new calendar event.",
+        "calendar": {
+          "__rl": true,
+          "value": "4ef121bb93d1a175033035076b1f902f0aed79d589327a3c1f6a957a593f8107@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "RecroTech"
+        },
+        "start": "={{ $fromAI(\"start\", \"it is the meeting date starting time\") }}",
+        "end": "={{ $fromAI(\"end\", \"it is the meeting date ending time\") }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI(\"eventName\", \"the name of the calendar event\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        176
+      ],
+      "id": "8b88b5be-55f2-438d-8e69-a88075d46ae9",
+      "name": "Create an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "JHQ2Q6arrzr4tYLE",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "4ef121bb93d1a175033035076b1f902f0aed79d589327a3c1f6a957a593f8107@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "RecroTech"
+        },
+        "eventId": "={{ $fromAI(\"Event_ID\", \"it is the id of the specific event\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        176
+      ],
+      "id": "c79dab45-3a52-4a20-8fae-b032616fca62",
+      "name": "Delete an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "JHQ2Q6arrzr4tYLE",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "4ef121bb93d1a175033035076b1f902f0aed79d589327a3c1f6a957a593f8107@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "RecroTech"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI(\"after\") }}",
+        "timeMax": "={{ $now.plus({ week: 4 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        176
+      ],
+      "id": "efba1c93-3b8b-4b6d-ab6b-21de13580807",
+      "name": "Get All",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "JHQ2Q6arrzr4tYLE",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Authenticate Chat ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate audio": {
+      "main": [
+        [
+          {
+            "node": "Send an audio file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate Chat ID": {
+      "main": [
+        [
+          {
+            "node": "Switch between Audio or Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch between Audio or Text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8153d2c0-ad2c-4c0a-9e65-708bece2b9d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "059edde2e20f4a9ce6aec6b39ade25e0a22ad64a8c4ee35ef7f7db8296e81767"
+  },
+  "id": "NCbj5YimVHlfPT0Y",
+  "tags": []
+}
