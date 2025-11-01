@@ -9,3 +9,13 @@ We’re building an AI-powered assistant to manage internal workflows, handle sc
 
 
 
+🔳 Kanboard api function to get and scrape all tasks, get tasks by categories, by colors, by times, by priorities, by estimated work time, time spent, tags, descriptions, project names, assignee and clearly return
+🔳 Develop classes considering different projects and considering SOLID principles 
+🔳 Develop a strict function to move task cards between categories, which is able to check different projects
+🔳 Develop a strict function to remove task cards 
+🔳 Develop a function to create tasks under specific categories to-do, working etc. for dfferent projects
+🔳 Build an MCP server or tool for making AI agent able to use the mentioned tools
+🔳 Write an explanatory prompt for AI agent to use the tools. 
+🔳 Design AI agent system decide on: 1 agent many tools, many agents distinct tools. compare performance and cost of decision then decide on the architecture
+🔳 Open issue in Kanboard github repo for n8n integration contribution
+🔳 Open issue in n8n repo for Kanboard integration contribution
